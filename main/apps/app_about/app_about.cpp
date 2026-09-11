@@ -159,7 +159,7 @@ void AppAbout::draw()
 
     canvas.setTextSize(body_size + 1);
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString(roomy ? "Waveshare ESP32-S3-Touch-LCD-5" : "Cardputer ADV", 4, 2);
+    canvas.drawString("M5Stack CoreS3", 4, 2);
     int y = 2 + canvas.fontHeight() + 2;
 
     canvas.setTextSize(body_size);
