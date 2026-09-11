@@ -38,7 +38,13 @@ struct Zone_t {
 };
 
 Zone_t _zones[kZonesMax];
-int _zone_count = 1;  // One zone to begin with; the panel is small.
+/* Four, as the controller this came from has. It was one here while the
+ * screen was a Cardputer's and could show a single zone at a time; this
+ * panel is the original's own size and holds all four at once, and the
+ * four schedules above were always there waiting for them. A zone with
+ * no pin assigned drives nothing, so the three extra ones cost a card on
+ * screen and not a valve. */
+int _zone_count = kZonesMax;
 Mode _mode      = Mode::Auto;
 bool _ready;
 
