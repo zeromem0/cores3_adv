@@ -42,6 +42,9 @@ constexpr int kHeaderH = 50;
 
 constexpr int kBtnW  = 150;
 constexpr int kBtnH  = 85;
+/* Two buttons to a quarter, with the original's own six pixels between
+ * them: 72 and 72 make the 150 a whole one is. */
+constexpr int kHalfW = 72;
 constexpr int kBtnX1 = 5;
 constexpr int kBtnX2 = 165;
 constexpr int kBtnY1 = 55;
@@ -433,9 +436,14 @@ void AppIrriga::draw_edit()
     draw_zone_card(_zone, kBtnX1, kBtnY1, true);
 
     draw_button("SET", kBtnX2, kBtnY1, kBtnW, false, kActive);
-    draw_button("NEXT", kBtnX1, kBtnY2, kBtnW, false, kText);
-    draw_button("+1", kBtnX2, kBtnY2, 72, false, kText);
-    draw_button("-1", kBtnX2 + 78, kBtnY2, 72, false, kText);
+
+    /* The walk both ways, sharing a quarter the way the two steps do.
+     * The original had only NEXT, which is forty-seven presses to reach
+     * the field before the one you are on. */
+    draw_button("PREV", kBtnX1, kBtnY2, kHalfW, false, kText);
+    draw_button("NEXT", kBtnX1 + kHalfW + 6, kBtnY2, kHalfW, false, kText);
+    draw_button("+1", kBtnX2, kBtnY2, kHalfW, false, kText);
+    draw_button("-1", kBtnX2 + kHalfW + 6, kBtnY2, kHalfW, false, kText);
 }
 
 void AppIrriga::draw_pins()
@@ -471,8 +479,8 @@ void AppIrriga::draw_pins()
     canvas.drawString("Relays are active low", 16, 150);
 
     draw_button("NEXT", kBtnX1, kBtnY2, kBtnW, false, kText);
-    draw_button("+1", kBtnX2, kBtnY2, 72, false, kText);
-    draw_button("-1", kBtnX2 + 78, kBtnY2, 72, false, kText);
+    draw_button("+1", kBtnX2, kBtnY2, kHalfW, false, kText);
+    draw_button("-1", kBtnX2 + kHalfW + 6, kBtnY2, kHalfW, false, kText);
 }
 
 void AppIrriga::draw()
@@ -573,11 +581,13 @@ void AppIrriga::handle_tap(int x, int y)
                 irrig::update();
                 audio::play_random_tone();
                 show(SCREEN_ZONE_SELECT);
-            } else if (inside(x, y, kBtnX1, kBtnY2, kBtnW, kBtnH)) {
+            } else if (inside(x, y, kBtnX1, kBtnY2, kHalfW, kBtnH)) {
+                next_field(-1);
+            } else if (inside(x, y, kBtnX1 + kHalfW + 6, kBtnY2, kHalfW, kBtnH)) {
                 next_field(1);
-            } else if (inside(x, y, kBtnX2, kBtnY2, 72, kBtnH)) {
+            } else if (inside(x, y, kBtnX2, kBtnY2, kHalfW, kBtnH)) {
                 adjust(1);
-            } else if (inside(x, y, kBtnX2 + 78, kBtnY2, 72, kBtnH)) {
+            } else if (inside(x, y, kBtnX2 + kHalfW + 6, kBtnY2, kHalfW, kBtnH)) {
                 adjust(-1);
             } else if (inside(x, y, kBtnX1, kBtnY1, kBtnW, kBtnH)) {
                 /* A tap on the card picks the line it landed on, which
@@ -596,9 +606,9 @@ void AppIrriga::handle_tap(int x, int y)
             if (inside(x, y, kBtnX1, kBtnY2, kBtnW, kBtnH)) {
                 _zone  = (_zone + 1) % irrig::zone_count();
                 _dirty = true;
-            } else if (inside(x, y, kBtnX2, kBtnY2, 72, kBtnH)) {
+            } else if (inside(x, y, kBtnX2, kBtnY2, kHalfW, kBtnH)) {
                 cycle_pin(1);
-            } else if (inside(x, y, kBtnX2 + 78, kBtnY2, 72, kBtnH)) {
+            } else if (inside(x, y, kBtnX2 + kHalfW + 6, kBtnY2, kHalfW, kBtnH)) {
                 cycle_pin(-1);
             }
             return;
