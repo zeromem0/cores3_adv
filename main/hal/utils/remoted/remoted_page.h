@@ -17,16 +17,17 @@ static const char REMOTED_PAGE[] = R"HTML(<!doctype html>
 :root{color-scheme:dark}
 body{margin:0;background:#111;color:#ddd;font:14px system-ui,sans-serif;
      display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}
-/* 640 because that is twice the panel's own 320. At 720 the browser was
-   scaling by two and a quarter, and a fractional scale on a pixel-exact
-   image is what turns crisp text into fringes. */
-canvas{width:100%;max-width:640px;image-rendering:pixelated;
+/* The width is worked out in the script and handed back here, because it
+   has to come out a whole number of the screen's own pixels and only the
+   script knows how many of those there are to a CSS one. Everything else
+   in the column follows it, so the page stays one width. */
+canvas{width:var(--w,100%);max-width:100%;image-rendering:pixelated;
        border:1px solid #333;border-radius:6px;background:#000}
-#pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:640px}
+#pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:var(--w,640px)}
 button{background:#222;color:#ddd;border:1px solid #444;border-radius:6px;
        padding:12px 0;font-size:15px;touch-action:manipulation}
 button:active{background:#99ff00;color:#000}
-form{display:flex;gap:6px;width:100%;max-width:640px}
+form{display:flex;gap:6px;width:100%;max-width:var(--w,640px)}
 input{flex:1;min-width:0;background:#222;color:#ddd;border:1px solid #444;border-radius:6px;padding:10px}
 form button{flex:0 0 110px}
 #st{font-size:12px;color:#888;min-height:1em}
@@ -34,7 +35,7 @@ form button{flex:0 0 110px}
    the pages belong to modules that register themselves, so the list
    cannot be written out here in advance. */
 #nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;
-     width:100%;max-width:640px;padding:2px 0 6px}
+     width:100%;max-width:var(--w,640px);padding:2px 0 6px}
 #nav a{color:#99ff00;text-decoration:none;font-size:13px}
 #nav a:hover{text-decoration:underline}
 #nav span{color:#666;font-size:13px}
@@ -59,9 +60,26 @@ form button{flex:0 0 110px}
 var cv=document.getElementById('s'),cx=cv.getContext('2d'),st=document.getElementById('st');
 var busy=false,fails=0;
 
-/* The device may send a quarter of the panel at a time when it has not
-   the memory to hold a whole frame, so what has arrived is kept here and
-   each piece is painted into it where the header says it belongs. */
+/* Whole screen pixels, not whole CSS ones.
+   A laptop at 125% display scaling puts 1.25 screen pixels on every CSS
+   pixel, so a canvas fixed at twice the panel's width -- 640 CSS for a
+   320 panel -- lands on two and a half screen pixels per panel pixel.
+   Half of them come out a pixel wider than the others, which is the
+   fringing on straight edges and the mush in small text. The scale is
+   picked in screen pixels and converted back, so whatever the browser is
+   scaling by, one panel pixel is a whole number of real ones. */
+function fit(){
+  var dpr=window.devicePixelRatio||1;
+  var room=(document.documentElement.clientWidth-22)*dpr;
+  var k=Math.max(1,Math.floor(room/cv.width));
+  document.documentElement.style.setProperty('--w',(cv.width*k/dpr)+'px');
+}
+addEventListener('resize',fit);
+fit();
+
+/* The device sends the panel a piece at a time, so what has arrived is
+   kept here and each piece is painted into it where the header says it
+   belongs. */
 function frame(){
   if(busy){return;}
   busy=true;
@@ -71,7 +89,7 @@ function frame(){
     var fw=v.getUint16(4,true),fh=v.getUint16(6,true);
     var x=v.getUint16(8,true),y=v.getUint16(10,true);
     var w=v.getUint16(12,true),h=v.getUint16(14,true);
-    if(fw!==cv.width||fh!==cv.height){cv.width=fw;cv.height=fh;}
+    if(fw!==cv.width||fh!==cv.height){cv.width=fw;cv.height=fh;fit();}
     var img=cx.createImageData(w,h),d=img.data,o=16;
     for(var i=0;i<w*h;i++){
       /* Big-endian on purpose: M5GFX stores 16bpp sprites byte-swapped
