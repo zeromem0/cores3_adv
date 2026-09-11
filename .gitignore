@@ -1,0 +1,81 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# MacOS desktop metadata files
+.DS_Store
+
+# Build files
+build/
+cmake-build-*/
+components/
+managed_components/
+
+# PlatformIO
+.pio/
+
+# VSCode
+.vscode/
+.cache/
+
+# Python virtual environment
+.venv/
+
+# Debug / Release files
+Debug/
+debug/
+Release/
+release/
+out/
+bin/
+obj/
+
+*.code-workspace
+
+sdkconfig
+sdkconfig.old
+
+# PlatformIO writes a per-environment sdkconfig; sdkconfig.defaults is
+# part of the project and stays tracked
+sdkconfig.*
+!sdkconfig.defaults
+
+# Linker maps written by stray shell redirects
+*.map
+
+# A tape built into the firmware is the builder's own business; the
+# emulator includes it only when it is there. See the .example beside it.
+main/apps/app_zx/assets/builtin_tape.h
+
+# The network seeded at first boot is the builder's own; only the
+# example beside it is in the repository.
+main/wifi_credentials.h

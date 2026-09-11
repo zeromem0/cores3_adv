@@ -1,0 +1,66 @@
+﻿#pragma once
+
+enum SpecKeys
+{
+  SPECKEY_NONE,
+  SPECKEY_1,
+  SPECKEY_2,
+  SPECKEY_3,
+  SPECKEY_4,
+  SPECKEY_5,
+  SPECKEY_6,
+  SPECKEY_7,
+  SPECKEY_8,
+  SPECKEY_9,
+  SPECKEY_0,
+  SPECKEY_Q,
+  SPECKEY_W,
+  SPECKEY_E,
+  SPECKEY_R,
+  SPECKEY_T,
+  SPECKEY_Y,
+  SPECKEY_U,
+  SPECKEY_I,
+  SPECKEY_O,
+  SPECKEY_P,
+  SPECKEY_A,
+  SPECKEY_S,
+  SPECKEY_D,
+  SPECKEY_F,
+  SPECKEY_G,
+  SPECKEY_H,
+  SPECKEY_J,
+  SPECKEY_K,
+  SPECKEY_L,
+  SPECKEY_ENTER,
+  SPECKEY_SHIFT,
+  SPECKEY_Z,
+  SPECKEY_X,
+  SPECKEY_C,
+  SPECKEY_V,
+  SPECKEY_B,
+  SPECKEY_N,
+  SPECKEY_M,
+  SPECKEY_SYMB,
+  SPECKEY_SPACE,
+  // indicates that everything above is not a normal key
+  SPECKEY_MAX_NORMAL,
+  // joystick keys
+  JOYK_UP,
+  JOYK_DOWN,
+  JOYK_LEFT,
+  JOYK_RIGHT,
+  JOYK_FIRE,
+  // special pseudo keys
+  SPECKEY_DEL,
+  SPECKEY_BREAK,
+  // special keys for the emulator
+  SPECKEY_MENU,
+};
+
+// The two lookup tables that used to live here -- specKeyToLetter and
+// letterToSpecKeys -- were namespace-scope std::unordered_maps, so every
+// translation unit that included this header built its own copy on the
+// heap at start-up. Six of them did, for tens of kilobytes that were never
+// given back, on a board whose remaining heap is measured in tens of
+// kilobytes. The one caller now keeps a static table of its own in flash.

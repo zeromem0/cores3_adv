@@ -1,0 +1,31 @@
+/*
+ * A tape built into the firmware, so the emulator has something to run
+ * with no card in the slot.
+ *
+ * No tape is carried in this repository: the Spectrum games worth
+ * playing are still under copyright, whatever their age. Generate your
+ * own from a .tap you are entitled to keep:
+ *
+ *   python tools/tap_to_header.py \
+ *       MYGAME.TAP \
+ *       main/apps/app_zx/assets/builtin_tape.h \
+ *       builtin_tape "My Game"
+ *
+ * The application picks the header up on its own -- it is included only
+ * when it exists -- and the tape appears in the list under BASIC, with
+ * Enter loading it off the emulated tape and Tab loading it at once.
+ *
+ * The file it writes looks like this:
+ */
+#pragma once
+
+#include <stddef.h>
+#include <stdint.h>
+
+static const char builtin_tape_title[] = "My Game";
+
+static const uint8_t builtin_tape[] = {
+    0x13, 0x00, 0x00, 0x00, /* ... the whole .tap, byte for byte ... */
+};
+
+static const size_t builtin_tape_size = sizeof(builtin_tape);
