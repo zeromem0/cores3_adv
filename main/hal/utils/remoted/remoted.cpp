@@ -27,10 +27,20 @@ namespace {
 
 const std::string _tag = "remoted";
 
-// Panel geometry. The three HAL sprites tile it exactly:
-//   keyboard bar at (0, 0), system bar right of it, canvas below that.
-constexpr int kFrameWidth = 240;
-constexpr int kFrameHeight = 135;
+/*
+ * Panel geometry, asked for rather than written down: the numbers here
+ * were the Cardputer's 240x135, so the page was being sent that corner
+ * of a 320x240 screen and nothing else.
+ */
+int panel_width()
+{
+    return GetHAL().display.width();
+}
+
+int panel_height()
+{
+    return GetHAL().display.height();
+}
 
 // The snapshot is kept as a handful of separate bands rather than one
 // block. A single 64 KB allocation does not survive alongside WiFi, the
@@ -38,45 +48,66 @@ constexpr int kFrameHeight = 135;
 // KB fit a fragmented heap and still let a whole frame be captured in one
 // pass. They double as the chunk size on the wire.
 constexpr int kBandRows = 16;
-constexpr int kBandCount = (kFrameHeight + kBandRows - 1) / kBandRows;
 
-/* A whole frame is 65 KB of buffer, which the heap does not have while
- * something large is running -- the emulator holds 62 KB the moment it
- * is open. Rather than give up the mirror or coarsen it, one quarter of
- * the panel goes out at a time, at full resolution, a different quarter
- * on each pass. The page keeps what it has already been sent and paints
- * each quarter into it as it arrives, so a screen that is not changing
- * fills in completely within four passes, and one that is changing
- * shows its quarters at slightly different ages.
+/*
+ * The whole screen arrives as a mosaic, one piece per pass.
  *
- * The two halves overlap by a row rather than being 67 and 68 tall, so
- * every quarter is the same size and one buffer serves all four. */
-constexpr int kTileWidth = kFrameWidth / 2;    // 120
-constexpr int kTileHeight = (kFrameHeight / 2) + 1;  // 68
-constexpr int kTileCount = 4;
+ * A full 320x240 frame is 150 KB of buffer, which the heap does not have
+ * while something large is running -- the emulator holds 62 KB the moment
+ * it is open. A piece of 160x120 is 38 KB, and four of them cover the
+ * panel exactly. The page keeps what it already has and paints each piece
+ * where the header says it belongs, so a screen that is not changing
+ * fills in completely within four passes, and one that is changing shows
+ * its pieces at slightly different ages.
+ *
+ * The piece is a fixed size rather than a division of the panel, and the
+ * last column and row are simply short when the panel is not a whole
+ * number of pieces across or down. On this one they are not.
+ */
+constexpr int kTileWidth  = 160;
+constexpr int kTileHeight = 120;
+constexpr int kBandCount  = (kTileHeight + kBandRows - 1) / kBandRows;
 
-int _tile = 0;           // the quarter to capture next
-int _snapshot_tile = 0;  // the quarter the buffer actually holds
-bool _tiling = false;
+int tile_cols()
+{
+    return (panel_width() + kTileWidth - 1) / kTileWidth;
+}
+
+int tile_rows()
+{
+    return (panel_height() + kTileHeight - 1) / kTileHeight;
+}
+
+int tile_count()
+{
+    return tile_cols() * tile_rows();
+}
+
+int _tile = 0;           // the piece to capture next
+int _snapshot_tile = 0;  // the piece the buffer actually holds
 
 int tile_origin_x(int tile)
 {
-    return _tiling ? ((tile & 1) ? kTileWidth : 0) : 0;
+    const int cols = tile_cols();
+    return (cols > 0 ? (tile % cols) : 0) * kTileWidth;
 }
 
 int tile_origin_y(int tile)
 {
-    return _tiling ? ((tile & 2) ? (kFrameHeight - kTileHeight) : 0) : 0;
+    const int cols = tile_cols();
+    return (cols > 0 ? (tile / cols) : 0) * kTileHeight;
 }
 
 int frame_width()
 {
-    return _tiling ? kTileWidth : kFrameWidth;
+    const int left = panel_width() - tile_origin_x(_snapshot_tile);
+    return left < kTileWidth ? (left > 0 ? left : 0) : kTileWidth;
 }
 
 int frame_height()
 {
-    return _tiling ? kTileHeight : kFrameHeight;
+    const int left = panel_height() - tile_origin_y(_snapshot_tile);
+    return left < kTileHeight ? (left > 0 ? left : 0) : kTileHeight;
 }
 
 int band_rows(int band)
@@ -159,56 +190,34 @@ void release_bands()
     _snapshot_valid = false;
 }
 
-bool reserve_for(bool tiling)
+/*
+ * One piece's worth of bands, sized for the largest piece so the same
+ * buffers serve the short ones at the right and bottom edges. There is
+ * no whole-frame mode to choose between any more: the mosaic is not a
+ * fallback for a tight heap but how the screen is sent.
+ */
+bool reserve_bands()
 {
-    _tiling = tiling;
     for (int i = 0; i < kBandCount; i++) {
-        const int rows = band_rows(i);
+        const int rows =
+            (i + 1) * kBandRows <= kTileHeight ? kBandRows : (kTileHeight - i * kBandRows);
         if (rows <= 0) {
             continue;
         }
-        _bands[i] = static_cast<uint16_t*>(malloc(frame_width() * rows * sizeof(uint16_t)));
+        _bands[i] = static_cast<uint16_t*>(malloc(kTileWidth * rows * sizeof(uint16_t)));
         if (_bands[i] == nullptr) {
+            release_bands();
+            mclog::tagWarn(_tag, "mosaic will not fit, {} bytes free, largest {}",
+                           esp_get_free_heap_size(),
+                           heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
             return false;
         }
     }
+
+    _bands_ready = true;
+    mclog::tagInfo(_tag, "mirroring {}x{} as {} pieces of {}x{}", panel_width(), panel_height(),
+                   tile_count(), kTileWidth, kTileHeight);
     return true;
-}
-
-/* Quarters while an application owns the panel, whether or not a whole
- * frame would fit: that application is the one short of memory -- the
- * emulator wants 48 KB in one piece -- and 48 KB of mirror buffer is
- * worth less than the thing being mirrored being able to run at all. */
-bool wanted_tiling()
-{
-    return GetHAL().isFullScreenApp();
-}
-
-bool reserve_bands()
-{
-    const bool wanted = wanted_tiling();
-
-    if (reserve_for(wanted)) {
-        _bands_ready = true;
-        if (wanted) {
-            mclog::tagInfo(_tag, "mirroring in {}x{} quarters", frame_width(), frame_height());
-        }
-        return true;
-    }
-    release_bands();
-
-    mclog::tagWarn(_tag, "frame will not fit, {} bytes free, largest {}", esp_get_free_heap_size(),
-                   heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
-
-    if (!wanted && reserve_for(true)) {
-        _bands_ready = true;
-        mclog::tagInfo(_tag, "mirroring in {}x{} quarters", frame_width(), frame_height());
-        return true;
-    }
-
-    release_bands();
-    _tiling = false;
-    return false;
 }
 
 void queue_key(uint8_t row, uint8_t col, bool state)
@@ -370,9 +379,9 @@ esp_err_t handle_frame(httpd_req_t* req)
     uint8_t header[16];
     memcpy(header, &kFrameMagic, 4);
     const uint16_t fields[6] = {
-        (uint16_t)kFrameWidth,               (uint16_t)kFrameHeight,
+        (uint16_t)panel_width(),                 (uint16_t)panel_height(),
         (uint16_t)tile_origin_x(_snapshot_tile), (uint16_t)tile_origin_y(_snapshot_tile),
-        (uint16_t)frame_width(),             (uint16_t)frame_height(),
+        (uint16_t)frame_width(),                 (uint16_t)frame_height(),
     };
     memcpy(header + 4, fields, sizeof(fields));
 
@@ -613,15 +622,6 @@ void update()
         const uint32_t now = GetHAL().millis();
         const bool watched = (now - _last_request_ms) < kIdleReleaseMs;
 
-        /* An application taking or giving up the panel changes how much
-         * of the heap the mirror may keep, so the buffer is handed back
-         * and taken again at the size that now applies. */
-        if (_bands_ready && _tiling != wanted_tiling()) {
-            xSemaphoreTake(_snapshot_lock, portMAX_DELAY);
-            release_bands();
-            xSemaphoreGive(_snapshot_lock);
-        }
-
         if (watched && !_bands_ready) {
             if (reserve_bands()) {
                 _alloc_failure_logged = false;
@@ -646,11 +646,10 @@ void update()
             if (xSemaphoreTake(_snapshot_lock, 0) == pdTRUE) {
                 capture_frame();
                 _snapshot_ms = now;
-                /* On to the next quarter, so four passes cover the panel
-                 * and a screen that is not moving fills in completely. */
-                if (_tiling) {
-                    _tile = (_tile + 1) % kTileCount;
-                }
+                /* On to the next piece, so a handful of passes cover the
+                 * panel and a screen that is not moving fills in
+                 * completely. */
+                _tile = (_tile + 1) % tile_count();
                 xSemaphoreGive(_snapshot_lock);
             }
         }

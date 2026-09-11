@@ -67,7 +67,7 @@ const char kPage[] =
     "border-radius:4px;padding:9px 18px;cursor:pointer}"
     "button:hover{background:#ffa176}"
     "button:disabled{background:#4a4640;color:#8d887f;cursor:default}"
-    "img{image-rendering:pixelated;width:min(96vw,720px);border:1px solid #34323a;"
+    "img{image-rendering:pixelated;max-width:100%;border:1px solid #34323a;"
     "border-radius:3px;background:#000}"
     "a{color:#ff8a5b}"
     "</style>"
@@ -80,9 +80,18 @@ const char kPage[] =
     "<script>"
     "const b=document.getElementById('b'),i=document.getElementById('i'),"
     "s=document.getElementById('s');"
+    /* Whole-number scaling only, and never smaller than life. Fixing the
+       width at 720 stretched a 320 pixel panel over 720 of screen, which
+       put every device pixel on two and a quarter browser ones and turned
+       the text to mush -- the opposite of what a screenshot is for. */
+    "function fit(){if(!i.naturalWidth){return;}"
+    "var avail=document.documentElement.clientWidth-48;"
+    "var s=Math.max(1,Math.floor(avail/i.naturalWidth));"
+    "i.style.width=(i.naturalWidth*s)+'px';}"
+    "addEventListener('resize',fit);"
     "b.onclick=()=>{b.disabled=true;s.textContent='reading the panel...';"
     "const t=Date.now();const u='/shot?bmp=1&t='+t;"
-    "i.onload=()=>{b.disabled=false;s.innerHTML='taken in '+(Date.now()-t)+' ms &middot; "
+    "i.onload=()=>{fit();b.disabled=false;s.innerHTML='taken in '+(Date.now()-t)+' ms &middot; "
     "<a download=\"cardputer.bmp\" href=\"'+u+'\">save</a>';};"
     "i.onerror=()=>{b.disabled=false;s.textContent='the panel could not be read';};"
     "i.src=u;};"

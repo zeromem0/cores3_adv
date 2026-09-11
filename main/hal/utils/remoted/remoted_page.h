@@ -12,18 +12,21 @@
 static const char REMOTED_PAGE[] = R"HTML(<!doctype html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Cardputer ADV</title>
+<title>M5Stack CoreS3</title>
 <style>
 :root{color-scheme:dark}
 body{margin:0;background:#111;color:#ddd;font:14px system-ui,sans-serif;
      display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}
-canvas{width:100%;max-width:720px;image-rendering:pixelated;
+/* 640 because that is twice the panel's own 320. At 720 the browser was
+   scaling by two and a quarter, and a fractional scale on a pixel-exact
+   image is what turns crisp text into fringes. */
+canvas{width:100%;max-width:640px;image-rendering:pixelated;
        border:1px solid #333;border-radius:6px;background:#000}
-#pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:720px}
+#pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:640px}
 button{background:#222;color:#ddd;border:1px solid #444;border-radius:6px;
        padding:12px 0;font-size:15px;touch-action:manipulation}
 button:active{background:#99ff00;color:#000}
-form{display:flex;gap:6px;width:100%;max-width:720px}
+form{display:flex;gap:6px;width:100%;max-width:640px}
 input{flex:1;min-width:0;background:#222;color:#ddd;border:1px solid #444;border-radius:6px;padding:10px}
 form button{flex:0 0 110px}
 #st{font-size:12px;color:#888;min-height:1em}
@@ -31,12 +34,12 @@ form button{flex:0 0 110px}
    the pages belong to modules that register themselves, so the list
    cannot be written out here in advance. */
 #nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;
-     width:100%;max-width:720px;padding:2px 0 6px}
+     width:100%;max-width:640px;padding:2px 0 6px}
 #nav a{color:#99ff00;text-decoration:none;font-size:13px}
 #nav a:hover{text-decoration:underline}
 #nav span{color:#666;font-size:13px}
 </style></head><body>
-<canvas id=s width=240 height=135></canvas>
+<canvas id=s width=320 height=240></canvas>
 <div id=pad>
   <button data-k="2,0">Fn</button>
   <button data-k="0,0" data-fn=1>Esc</button>
