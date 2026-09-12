@@ -6,6 +6,7 @@
 #include "app_record.h"
 #include "assets/record_big.h"
 #include "assets/record_small.h"
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -34,6 +35,7 @@ void AppRecord::onOpen()
     mclog::tagInfo(getAppInfo().name, "on open");
 
     audio::set_keyboard_sfx_enable(false);
+    app_header::reset();
 
     _rec_data = new int16_t[RECORD_SIZE]();
 
@@ -57,8 +59,11 @@ void AppRecord::onRunning()
 
     // Close app when home button clicked
     if (GetHAL().homeButton.wasClicked()) {
-        // GetHAL().speaker.setVolume(90);
-        // audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
         close();
     }
 }
@@ -141,8 +146,9 @@ void AppRecord::start_playback()
 void AppRecord::render_page_recording()
 {
     GetHAL().canvas.fillScreen(THEME_COLOR_BG);
+    app_header::draw(GetHAL().canvas, "Record");
     GetHAL().canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    GetHAL().canvas.setCursor(10, 0);
+    GetHAL().canvas.setCursor(10, app_header::height() + 4);
     GetHAL().canvas.setTextSize(1);
     GetHAL().canvas.print("Press enter to play");
     GetHAL().pushCanvas();
@@ -151,8 +157,9 @@ void AppRecord::render_page_recording()
 void AppRecord::render_page_playing()
 {
     GetHAL().canvas.fillScreen(THEME_COLOR_BG);
+    app_header::draw(GetHAL().canvas, "Record");
     GetHAL().canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    GetHAL().canvas.setCursor(10, 0);
+    GetHAL().canvas.setCursor(10, app_header::height() + 4);
     GetHAL().canvas.setTextSize(1);
     GetHAL().canvas.print("playing");
     GetHAL().pushCanvas();
@@ -170,7 +177,7 @@ void AppRecord::render_waveform()
         data = &_rec_data[_draw_record_idx * RECORD_LENGTH];
 
         // 清除波形区域（避免重叠绘制）
-        int32_t waveform_top    = 15;  // 文字下方
+        int32_t waveform_top    = app_header::height() + 18;  // under the band and the line of text
         int32_t waveform_height = GetHAL().canvas.height() - waveform_top;
         GetHAL().canvas.fillRect(10, waveform_top, RECORD_LENGTH, waveform_height, THEME_COLOR_BG);
 
@@ -200,7 +207,7 @@ void AppRecord::render_waveform()
         }
 
         // 重绘UI文字
-        GetHAL().canvas.setCursor(10, 0);
+        GetHAL().canvas.setCursor(10, app_header::height() + 4);
         GetHAL().canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
         GetHAL().canvas.setTextSize(1);
         GetHAL().canvas.print("Press enter to play");

@@ -51,13 +51,16 @@
 
 /* Header: "dhex" title on the left, serial params + RX/TX pins on the
  * right (two small lines), a divider line under the whole thing. */
-#define DHEX_TITLE_FONT DHEX_GFX_FONT_BOLD_18
+/* The same face the host writes every other application name in, and
+ * on the same baseline: a screen that wrote its own in a different one
+ * was the odd screen out in a row of screenshots. */
+#define DHEX_TITLE_FONT DHEX_GFX_FONT_BOLD_20
 #define DHEX_HEADER_MARGIN 4
 
 /* Room kept clear in the top right for the way out, which the
  * application draws over this band. 96 for the button and 12 of air. */
 #define DHEX_HEADER_CORNER 108
-#define DHEX_HEADER_TITLE_BASELINE 22
+#define DHEX_HEADER_TITLE_BASELINE 24
 #define DHEX_HEADER_LINE1_BASELINE 14
 #define DHEX_HEADER_LINE2_BASELINE 30
 #define DHEX_HEADER_HEIGHT 34

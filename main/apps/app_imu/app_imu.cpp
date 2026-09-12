@@ -7,6 +7,7 @@
 #include "assets/imu_big.h"
 #include "assets/imu_small.h"
 #include "assets/imu_panel.h"
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -36,6 +37,8 @@ void AppImu::onOpen()
     GetHAL().canvas.setFont(FONT_REPL);
     GetHAL().canvas.setTextSize(1);
 
+    app_header::reset();
+
     GetHAL().imu.begin();
 }
 
@@ -53,6 +56,9 @@ void AppImu::onRunning()
 
         // Render
         GetHAL().canvas.fillScreen(THEME_COLOR_BG);
+        app_header::draw(GetHAL().canvas, "IMU");
+        GetHAL().canvas.setFont(FONT_REPL);
+        GetHAL().canvas.setTextSize(1);
         render_imu_data_label();
         render_imu_panel();
         GetHAL().pushCanvas();
@@ -60,6 +66,12 @@ void AppImu::onRunning()
 
     // Close app when home button clicked
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
         audio::play_random_tone();
         close();
     }
@@ -72,29 +84,41 @@ void AppImu::onClose()
 
 void AppImu::render_imu_data_label()
 {
+    /* The six readings start under the band and keep the spacing they
+     * were written with. */
+    const int top = app_header::height() + 6;
+
     GetHAL().canvas.setTextColor((uint32_t)0x8FC8AA);
     _str_buffer = fmt::format("AX: {: .1f}", _imu_data.accel.x);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, +2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top);
     _str_buffer = fmt::format("AY: {: .1f}", _imu_data.accel.y);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, 16 + 2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top + 16);
     _str_buffer = fmt::format("AZ: {: .1f}", _imu_data.accel.z);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, 32 + 2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top + 32);
 
     GetHAL().canvas.setTextColor((uint32_t)0x88AED9);
     _str_buffer = fmt::format("GX: {: .1f}", _imu_data.gyro.x);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, 56 - 2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top + 52);
     _str_buffer = fmt::format("GY: {: .1f}", _imu_data.gyro.y);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, 72 - 2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top + 68);
     _str_buffer = fmt::format("GZ: {: .1f}", _imu_data.gyro.z);
-    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, 88 - 2);
+    GetHAL().canvas.drawString(_str_buffer.c_str(), 6, top + 84);
 
     _str_buffer.clear();
 }
 
 void AppImu::render_imu_panel()
 {
-    const int panel_center_x = 141;
-    const int panel_center_y = 53;
+    /*
+     * In the middle of what is left under the band, rather than at the
+     * 141,53 it was given on a 240x135 panel -- where it was the middle,
+     * and here was neither. The readings down the left end at about
+     * seventy columns, so a dial a hundred wide centred on 320 clears
+     * them with room to spare.
+     */
+    const int panel_center_x = GetHAL().canvas.width() / 2;
+    const int panel_center_y =
+        app_header::height() + (GetHAL().canvas.height() - app_header::height()) / 2;
 
     // Panel
     int w = 100;

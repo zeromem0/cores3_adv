@@ -6,6 +6,7 @@
 #include "assets/wilma_big.h"
 #include "assets/wilma_small.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -763,6 +764,15 @@ bool AppWilma::pump()
         _close_requested = true;
         _abort           = true;
     }
+
+    /* The corner of the band, polled here for the same reason the home
+     * button is: recording and listening each run a loop of their own,
+     * and a way out that worked only between them would not work while
+     * either was going. */
+    if (app_header::back_pressed(GetHAL().display.width(), 0, 0)) {
+        _close_requested = true;
+        _abort           = true;
+    }
     return _abort;
 }
 
@@ -1044,15 +1054,16 @@ void AppWilma::draw_menu()
 {
     auto& canvas = GetHAL().display;
     clear_if_needed();
+    app_header::draw(canvas, "Wilma");
     canvas.setFont(&fonts::Font0);
     canvas.setTextDatum(top_left);
     canvas.setTextSize(1);
 
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString(_mic_ready ? "Record a phrase" : "No microphone", 4, 2);
+    canvas.drawString(_mic_ready ? "Record a phrase" : "No microphone", 4, app_header::height() + 4);
 
     for (int p = 0; p < kPhrases; p++) {
-        const int y = 18 + p * 14;
+        const int y = app_header::height() + 20 + p * 14;
         const bool sel = (p == _selected);
 
         /* Both states painted, not just the highlighted one: without a
@@ -1080,11 +1091,11 @@ void AppWilma::draw_record()
     canvas.setFont(&fonts::Font0);
     canvas.setTextSize(2);
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString("Say it now", 4, 20);
+    canvas.drawString("Say it now", 4, app_header::height() + 8);
 
     canvas.setTextSize(1);
     canvas.setTextColor(TFT_WHITE, THEME_COLOR_BG);
-    canvas.drawString(kPhraseNames[_selected], 4, 50);
+    canvas.drawString(kPhraseNames[_selected], 4, app_header::height() + 38);
 }
 
 void AppWilma::draw_listen()
@@ -1096,15 +1107,15 @@ void AppWilma::draw_listen()
 
     canvas.setTextSize(1);
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString("Listening", 4, 2);
+    canvas.drawString("Listening", 4, app_header::height() + 4);
 
     canvas.setTextSize(2);
     if (_seq_done) {
         canvas.setTextColor(TFT_GREENYELLOW, THEME_COLOR_BG);
-        canvas.drawString("OK", 4, 26);
+        canvas.drawString("OK", 4, app_header::height() + 20);
     } else {
         canvas.setTextColor(TFT_WHITE, THEME_COLOR_BG);
-        canvas.drawString(_last_phrase >= 0 ? kPhraseNames[_last_phrase] : "...", 4, 26);
+        canvas.drawString(_last_phrase >= 0 ? kPhraseNames[_last_phrase] : "...", 4, app_header::height() + 20);
     }
 
     /*
@@ -1168,7 +1179,7 @@ void AppWilma::draw_capture(bool armed)
 
     canvas.setTextSize(1);
     canvas.setTextColor(TFT_WHITE, THEME_COLOR_BG);
-    canvas.drawString(kPhraseNames[_selected], 4, 50);
+    canvas.drawString(kPhraseNames[_selected], 4, app_header::height() + 38);
 
     const int bar_y = 70;
     const int bar_h = 10;
@@ -1266,6 +1277,8 @@ void AppWilma::handle_char(char ch)
 void AppWilma::onOpen()
 {
     mclog::tagInfo(getAppInfo().name, "on open");
+
+    app_header::reset();
 
     /*
      * Worth having on the record: free memory on this board falls in
