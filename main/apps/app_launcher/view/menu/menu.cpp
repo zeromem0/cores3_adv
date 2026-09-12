@@ -37,7 +37,7 @@ void LauncherMenu::init(int launcherAppId)
      */
     static const char* const kDesktop[] = {
         "SetWiFi", "Clock",   "TaskMan", "SDCard", "Jobs",
-        "Dhex",    "Aprecio", "Irriga",  "zx",     "Wilma",
+        "Dhex",    "Aprecio", "Irriga",  "ZX",     "Wilma",
         "About",   "Bclock",  "IMU",     "Record",
     };
 

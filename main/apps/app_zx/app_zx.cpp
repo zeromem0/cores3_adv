@@ -88,7 +88,7 @@ bool has_extension(const std::string& name, const char* extension)
 
 AppZX::AppZX()
 {
-    setAppInfo().name     = "zx";
+    setAppInfo().name     = "ZX";
     setAppInfo().userData = new AppIcon_t(image_data_zx_big, image_data_zx_small);
 }
 
