@@ -478,7 +478,8 @@ void AppIrriga::draw_pins()
     canvas.setTextColor(kDim, kBg);
     canvas.drawString("Relays are active low", 16, 150);
 
-    draw_button("NEXT", kBtnX1, kBtnY2, kBtnW, false, kText);
+    draw_button("PREV", kBtnX1, kBtnY2, kHalfW, false, kText);
+    draw_button("NEXT", kBtnX1 + kHalfW + 6, kBtnY2, kHalfW, false, kText);
     draw_button("+1", kBtnX2, kBtnY2, kHalfW, false, kText);
     draw_button("-1", kBtnX2 + kHalfW + 6, kBtnY2, kHalfW, false, kText);
 }
@@ -603,7 +604,11 @@ void AppIrriga::handle_tap(int x, int y)
             return;
 
         case SCREEN_PINS:
-            if (inside(x, y, kBtnX1, kBtnY2, kBtnW, kBtnH)) {
+            if (inside(x, y, kBtnX1, kBtnY2, kHalfW, kBtnH)) {
+                const int count = irrig::zone_count();
+                _zone           = (_zone + count - 1) % count;
+                _dirty          = true;
+            } else if (inside(x, y, kBtnX1 + kHalfW + 6, kBtnY2, kHalfW, kBtnH)) {
                 _zone  = (_zone + 1) % irrig::zone_count();
                 _dirty = true;
             } else if (inside(x, y, kBtnX2, kBtnY2, kHalfW, kBtnH)) {
