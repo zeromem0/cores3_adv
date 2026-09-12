@@ -9,6 +9,7 @@
 #include <mooncake.h>
 #include <apps.h>
 #include <hal.h>
+#include <hal/utils/ble_keyboard/ble_keyboard.h>
 #include <hal/utils/osk/osk.h>
 #include <hal/utils/wifi_store/wifi_store.h>
 #include <hal/utils/irrig/irrigd.h>
@@ -60,6 +61,7 @@ extern "C" void app_main(void)
     register_builtin_jobs();
     register_irrigd_job();
     timed::register_timed_job();
+    ble_keyboard::register_ble_keyboard_job();
     jobs::start_autostart();
     screenshot::init();
 
