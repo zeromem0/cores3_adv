@@ -26,6 +26,13 @@ for the arrows, enter and escape, and a drawn band along the bottom carries
 the whole matrix. The band is not built when a CardKB answers -- on 240
 rows it would be taking room from the application under it.
 
+A Bluetooth keyboard is the third way in, and arrives at the same place.
+The `blekbd` job takes the board's radio as a BLE HID host, looks for
+anything advertising the HID service, asks it to encrypt the link, and
+turns the usages it sends into the same matrix positions. It is off until
+started from the jobs application, because the radio is paid for in
+internal memory; once started it stays up until the board is rebooted.
+
 The power button is the home key. `M5.BtnA` on this board is a touch zone
 along the bottom of the screen, which the nine cells are already using.
 
