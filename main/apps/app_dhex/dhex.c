@@ -979,7 +979,7 @@ static void dhex_draw_header(dhex_gfx_t *gfx)
 
     dhex_gfx_set_font(gfx, DHEX_TITLE_FONT);
     dhex_gfx_set_color(gfx, DHEX_GFX_COLOR_WHITE);
-    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "dhex");
+    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "Dhex");
 
     const dhex_uart_config_t *cfg = &dhex_state.active_config;
     char params[24];
@@ -1017,7 +1017,7 @@ static void dhex_draw_config_screen(dhex_gfx_t *gfx)
 
     dhex_gfx_set_font(gfx, DHEX_TITLE_FONT);
     dhex_gfx_set_color(gfx, DHEX_GFX_COLOR_WHITE);
-    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "dhex config");
+    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "Dhex config");
     dhex_gfx_line(gfx, 0, DHEX_HEADER_HEIGHT, screen_width - 1, DHEX_HEADER_HEIGHT);
 
     char baud_text[12];
@@ -1087,7 +1087,7 @@ static void dhex_draw_detecting_screen(dhex_gfx_t *gfx)
     dhex_gfx_clear(gfx, DHEX_GFX_COLOR_BLACK);
     dhex_gfx_set_font(gfx, DHEX_TITLE_FONT);
     dhex_gfx_set_color(gfx, DHEX_GFX_COLOR_WHITE);
-    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "dhex config");
+    dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, DHEX_HEADER_TITLE_BASELINE, "Dhex config");
     dhex_gfx_line(gfx, 0, DHEX_HEADER_HEIGHT, screen_width - 1, DHEX_HEADER_HEIGHT);
     dhex_gfx_text(gfx, DHEX_HEADER_MARGIN, screen_height / 2, "Detecting baud...");
     dhex_gfx_present(gfx);

@@ -36,9 +36,9 @@ void LauncherMenu::init(int launcherAppId)
      * is written and is given its place afterwards.
      */
     static const char* const kDesktop[] = {
-        "SetWiFi", "Clock",   "TaskMan", "SDCard", "jobs",
-        "dhex",    "aprecio", "irriga",  "zx",     "wilma",
-        "about",   "bClock",  "IMU",     "Record",
+        "SetWiFi", "Clock",   "TaskMan", "SDCard", "Jobs",
+        "Dhex",    "Aprecio", "Irriga",  "zx",     "Wilma",
+        "About",   "Bclock",  "IMU",     "Record",
     };
 
     auto installed_apps = GetMooncake().getAppAbilityManager()->getAllAbilityInstance();

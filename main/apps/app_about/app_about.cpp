@@ -91,7 +91,7 @@ int flash_mhz()
 
 AppAbout::AppAbout()
 {
-    setAppInfo().name = "about";
+    setAppInfo().name = "About";
     setAppInfo().userData = new AppIcon_t(image_data_about_big, image_data_about_small);
 }
 

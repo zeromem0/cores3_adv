@@ -30,7 +30,7 @@ constexpr std::uint32_t kTickIntervalMs = 20;
 
 AppDhex::AppDhex()
 {
-    setAppInfo().name     = "dhex";
+    setAppInfo().name     = "Dhex";
     setAppInfo().userData = new AppIcon_t(image_data_dhex_big, image_data_dhex_small);
 }
 

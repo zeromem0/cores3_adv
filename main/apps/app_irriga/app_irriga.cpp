@@ -146,7 +146,7 @@ int quadrant_y(int index)
 
 AppIrriga::AppIrriga()
 {
-    setAppInfo().name     = "irriga";
+    setAppInfo().name     = "Irriga";
     setAppInfo().userData = new AppIcon_t(image_data_irriga_big, image_data_irriga_small);
 }
 

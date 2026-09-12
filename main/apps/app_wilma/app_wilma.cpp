@@ -73,7 +73,7 @@ float goertzel(const std::int16_t* samples, int len, float hz, int rate)
 
 AppWilma::AppWilma()
 {
-    setAppInfo().name     = "wilma";
+    setAppInfo().name     = "Wilma";
     setAppInfo().userData = new AppIcon_t(image_data_wilma_big, image_data_wilma_small);
 }
 

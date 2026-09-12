@@ -70,7 +70,7 @@ void AppBClock::Object_t::move(int width, int height)
 
 AppBClock::AppBClock()
 {
-    setAppInfo().name     = "bClock";
+    setAppInfo().name     = "Bclock";
     setAppInfo().userData = new AppIcon_t(image_data_bclock_big, image_data_bclock_small);
 }
 

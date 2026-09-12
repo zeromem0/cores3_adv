@@ -81,7 +81,7 @@ constexpr std::uint16_t kColourBg  = TFT_BLACK;
 
 AppJobs::AppJobs()
 {
-    setAppInfo().name     = "jobs";
+    setAppInfo().name     = "Jobs";
     setAppInfo().userData = new AppIcon_t(image_data_jobs_big, image_data_jobs_small);
 }
 

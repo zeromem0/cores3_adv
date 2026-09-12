@@ -90,7 +90,7 @@ std::string interval_text(std::uint32_t ms)
 
 AppAprecio::AppAprecio()
 {
-    setAppInfo().name     = "aprecio";
+    setAppInfo().name     = "Aprecio";
     setAppInfo().userData = new AppIcon_t(image_data_aprecio_big, image_data_aprecio_small);
 }
 
@@ -553,7 +553,7 @@ void AppAprecio::render_main()
     c.setFont(&fonts::FreeSansBold12pt7b);
     c.setTextColor(TFT_WHITE);
     c.setTextDatum(lgfx::textdatum_t::baseline_left);
-    c.drawString("aprecio", kMargin, 24);
+    c.drawString("Aprecio", kMargin, 24);
 
     c.setFont(&fonts::Font0);
     c.setTextDatum(lgfx::textdatum_t::baseline_right);
@@ -678,7 +678,7 @@ void AppAprecio::render_config()
     c.setFont(&fonts::FreeSansBold12pt7b);
     c.setTextColor(TFT_WHITE);
     c.setTextDatum(lgfx::textdatum_t::baseline_left);
-    c.drawString("aprecio config", kMargin, 24);
+    c.drawString("Aprecio config", kMargin, 24);
 
     c.drawLine(0, kHeaderHeight, c.width() - 1, kHeaderHeight, (uint32_t)0x555555);
 
