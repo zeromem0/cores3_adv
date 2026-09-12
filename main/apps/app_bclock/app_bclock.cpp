@@ -10,6 +10,7 @@
 #include "assets/molecules.h"
 #include "assets/snowflakes.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <hal.h>
@@ -249,6 +250,11 @@ void AppBClock::draw_frame()
     }
     display.endWrite();
 
+    /* Last, and on every frame: the molecules cross the whole panel, so
+     * a band drawn once at the top would be walked over within
+     * seconds. */
+    app_header::draw(display, "Bclock");
+
     _frames++;
     const std::uint32_t now_ms = GetHAL().millis();
     if (now_ms - _fps_ms >= 1000) {
@@ -267,6 +273,7 @@ void AppBClock::onOpen()
      * they leave behind. */
     GetHAL().setFullScreenApp(true);
     GetHAL().display.fillScreen(TFT_BLACK);
+    app_header::reset();
 
     _ready = false;
 
@@ -321,6 +328,12 @@ void AppBClock::onRunning()
     }
 
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().display.width(), 0, 0)) {
         audio::play_random_tone();
         close();
         return;

@@ -53,6 +53,10 @@
  * right (two small lines), a divider line under the whole thing. */
 #define DHEX_TITLE_FONT DHEX_GFX_FONT_BOLD_18
 #define DHEX_HEADER_MARGIN 4
+
+/* Room kept clear in the top right for the way out, which the
+ * application draws over this band. 96 for the button and 12 of air. */
+#define DHEX_HEADER_CORNER 108
 #define DHEX_HEADER_TITLE_BASELINE 22
 #define DHEX_HEADER_LINE1_BASELINE 14
 #define DHEX_HEADER_LINE2_BASELINE 30
@@ -989,16 +993,11 @@ static void dhex_draw_header(dhex_gfx_t *gfx)
 
     dhex_gfx_set_font(gfx, DHEX_SMALL_FONT);
     dhex_gfx_set_color(gfx, DHEX_GFX_COLOR_LIGHT);
+    const int right_edge = screen_width - DHEX_HEADER_CORNER - DHEX_HEADER_MARGIN;
     const int params_w = (int)dhex_gfx_text_width(gfx, params);
     const int pins_w = (int)dhex_gfx_text_width(gfx, pins);
-    dhex_gfx_text(gfx,
-                      screen_width - DHEX_HEADER_MARGIN - params_w,
-                      DHEX_HEADER_LINE1_BASELINE,
-                      params);
-    dhex_gfx_text(gfx,
-                      screen_width - DHEX_HEADER_MARGIN - pins_w,
-                      DHEX_HEADER_LINE2_BASELINE,
-                      pins);
+    dhex_gfx_text(gfx, right_edge - params_w, DHEX_HEADER_LINE1_BASELINE, params);
+    dhex_gfx_text(gfx, right_edge - pins_w, DHEX_HEADER_LINE2_BASELINE, pins);
 
     dhex_gfx_line(gfx, 0, DHEX_HEADER_HEIGHT, screen_width - 1, DHEX_HEADER_HEIGHT);
 }

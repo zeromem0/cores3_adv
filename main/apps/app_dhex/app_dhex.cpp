@@ -3,6 +3,7 @@
  */
 #include "app_dhex.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -42,7 +43,16 @@ void AppDhex::onOpen()
 {
     mclog::tagInfo(getAppInfo().name, "on open");
 
-    _gfx = dhex_host_gfx_create(&GetHAL().canvas, []() { GetHAL().pushCanvas(); });
+    app_header::reset();
+
+    /* dhex draws a band of its own already -- its name, the port and the
+     * pins, and a rule under them -- and now keeps the top right corner
+     * clear for this. Only the button is added, on the way out to the
+     * panel, which is as often as anything changes. */
+    _gfx = dhex_host_gfx_create(&GetHAL().canvas, []() {
+        app_header::draw_back(GetHAL().canvas);
+        GetHAL().pushCanvas();
+    });
     if (_gfx == nullptr) {
         mclog::tagError(getAppInfo().name, "graphics surface allocation failed");
         _close_requested = true;
@@ -142,6 +152,12 @@ void AppDhex::onRunning()
 {
     if (_close_requested) {
         _close_requested = false;
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
+        audio::play_random_tone();
         close();
         return;
     }

@@ -10,6 +10,7 @@
  */
 #include "app_about.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/theme.h>
 #include <hal.h>
@@ -157,10 +158,14 @@ void AppAbout::draw()
         canvas.pushImage(width - kLogoW - 8, 4, kLogoW, kLogoRows, image_data_boot);
     }
 
+    app_header::draw(canvas, "About");
+
+    canvas.setFont(&fonts::Font0);
     canvas.setTextSize(body_size + 1);
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString("M5Stack CoreS3", 4, 2);
-    int y = 2 + canvas.fontHeight() + 2;
+    const int top = app_header::height() + 6;
+    canvas.drawString("M5Stack CoreS3", 4, top);
+    int y = top + canvas.fontHeight() + 2;
 
     canvas.setTextSize(body_size);
     const int row = canvas.fontHeight() + (roomy ? 8 : 2);
@@ -257,6 +262,8 @@ void AppAbout::onOpen()
         }
     });
 
+    app_header::reset();
+
     draw();
     _last_draw_ms = GetHAL().millis();
 }
@@ -271,6 +278,12 @@ void AppAbout::onRunning()
     }
 
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
         audio::play_random_tone();
         close();
         return;

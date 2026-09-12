@@ -6,6 +6,7 @@
 #include "app_set_wifi.h"
 #include "assets/set_wifi_big.h"
 #include "assets/set_wifi_small.h"
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -33,6 +34,7 @@ void AppSetWiFi::onOpen()
     // This application drives scan and connect from the main task, which
     // must not overlap with the background rejoin task doing the same.
     wifi_store::suspend_auto_connect();
+    app_header::reset();
 
     // Reset status
     _wifi_ssid.clear();
@@ -79,6 +81,12 @@ void AppSetWiFi::onRunning()
 
     // Close app when home button clicked
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
         audio::play_random_tone();
         close();
     }
@@ -156,6 +164,7 @@ void AppSetWiFi::render_network_list()
     const int kMarginX    = width >= 480 ? 10 : 4;
 
     canvas.fillScreen(THEME_COLOR_BG);
+    app_header::draw(canvas, "SetWiFi");
     canvas.setTextDatum(top_left);
 
     /*
@@ -171,7 +180,7 @@ void AppSetWiFi::render_network_list()
 
     canvas.setTextSize(kTitleScale);
     canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
-    canvas.drawString("Choose a network", kMarginX, 8);
+    canvas.drawString("Choose a network", kMarginX, app_header::height() + 8);
     const int title_height = canvas.fontHeight();
 
     canvas.setTextSize(kTextScale);
@@ -181,7 +190,7 @@ void AppSetWiFi::render_network_list()
     const int glyph_w   = canvas.textWidth("0");
     const int row_air   = canvas.fontHeight();
     const int row_pitch = canvas.fontHeight() + row_air;
-    const int list_top  = title_height + 24;
+    const int list_top  = app_header::height() + 8 + title_height + 12;
 
     const int rows = static_cast<int>(_networks.size()) + 1;
 

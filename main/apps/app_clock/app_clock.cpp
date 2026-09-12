@@ -11,6 +11,7 @@
 #include <apps/utils/theme.h>
 #include <hal/utils/jobs/jobs.h>
 #include <hal/utils/timed/timed.h>
+#include <apps/utils/app_header/app_header.h>
 #include <hal/utils/touch_keys/touch_keys.h>
 #include <mooncake_log.h>
 
@@ -38,25 +39,25 @@ struct Rect_t {
 
 enum Button_t {
     /* Left to right as they are read, and as a watch has them: walk the
-     * fields, step the one you are on, commit, the one that talks to the
-     * world outside the chip, and the way out.
+     * fields, step the one you are on, commit, and the one that talks to
+     * the world outside the chip.
      *
-     * Leaving is a button here because it has to be. The nine touch
-     * cells that stand in for Escape everywhere else are suspended while
-     * this screen is up -- their middle row sits exactly where this one
-     * does -- so without it the only way back would be a key or the
-     * power button. */
+     * Leaving is not among them any more: it lives in the corner of the
+     * band across the top, the same one every other screen on this board
+     * carries. It had to be a button here while there was no band, since
+     * the nine touch cells that stand in for Escape elsewhere are
+     * suspended on this screen -- their middle row sits exactly where
+     * this one does. */
     kBtnPrev = 0,
     kBtnNext,
     kBtnPlus,
     kBtnMinus,
     kBtnSet,
     kBtnSync,
-    kBtnBack,
     kButtonCount,
 };
 
-const char* const kLabels[kButtonCount] = {"PREV", "NEXT", "+1", "-1", "SET", "SYNC", "BACK"};
+const char* const kLabels[kButtonCount] = {"PREV", "NEXT", "+1", "-1", "SET", "SYNC"};
 
 /* Where each field sits in "YYYY-MM-DD HH:MM:SS", in characters. The
  * stamp is drawn as one string with the selection underlined beneath it,
@@ -135,6 +136,7 @@ void AppClock::onOpen()
     _redraw_ms       = 0;
     _notice_until_ms = 0;
     _was_touching    = false;
+    app_header::reset();
 
     _key_slot = GetHAL().keyboard.onKeyEvent.connect(
         [this](const Keyboard::KeyEvent_t& event) { handle_key(event); });
@@ -178,6 +180,12 @@ void AppClock::onRunning()
     std::int32_t tx     = 0;
     std::int32_t ty     = 0;
     const bool touching = GetHAL().display.getTouch(&tx, &ty) > 0;
+
+    if (app_header::back_pressed_at(touching, (int)tx, (int)ty, GetHAL().canvas.width(),
+                                    GetHAL().canvasKeyboardBar.width(), 0)) {
+        _close_requested = true;
+        return;
+    }
 
     handle_touch(touching, (int)tx, (int)ty);
 
@@ -225,10 +233,11 @@ void AppClock::render()
     const int line_h = 10 * scale;
 
     canvas.fillScreen(kBg);
+    app_header::draw(canvas, "Clock");
     canvas.setFont(&fonts::Font0);
     canvas.setTextDatum(top_left);
 
-    const int top = margin;
+    const int top = app_header::height() + margin;
 
     /* The chip's time, or the copy being edited: while a field is being
      * set, the face has to hold still. */
@@ -436,9 +445,6 @@ void AppClock::handle_tap(int x, int y)
                 break;
             case kBtnSync:
                 request_sync();
-                break;
-            case kBtnBack:
-                _close_requested = true;
                 break;
             default:
                 break;

@@ -3,6 +3,7 @@
  */
 #include "app_zx.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -48,12 +49,20 @@ constexpr std::uint32_t kFrameIntervalMs = 20;
  * number: this list was written for 135 rows and would show six of them
  * on a screen with room for twelve. */
 constexpr int kRowHeight = 16;
-constexpr int kListTop   = 26;
+
+/* Under the band across the top, which the browser carries like every
+ * other screen. The emulator itself does not: what it draws is the
+ * Spectrum's own screen and its border, and a band over that would be a
+ * band over the machine. */
+int list_top()
+{
+    return app_header::height() + 8;
+}
 
 int visible_rows()
 {
     /* The hint line along the bottom keeps the last row for itself. */
-    const int rows = (GetHAL().display.height() - kListTop - kRowHeight) / kRowHeight;
+    const int rows = (GetHAL().display.height() - list_top() - kRowHeight) / kRowHeight;
     return rows > 1 ? rows : 1;
 }
 
@@ -147,14 +156,15 @@ void AppZX::draw_browser()
     display.setTextSize(1);
     display.setFont(&fonts::Font0);
 
+    app_header::draw(display, "ZX");
+    display.setFont(&fonts::Font0);
+    display.setTextSize(1);
     display.setTextDatum(top_left);
-    display.drawString("ZX Spectrum 48K", 8, 6);
-    display.drawFastHLine(0, 20, display.width(), TFT_DARKGREY);
 
     const int total = (int)_entries.size();
     for (int i = 0; i < visible_rows() && (_scroll + i) < total; i++) {
         const int index    = _scroll + i;
-        const int y        = kListTop + i * kRowHeight;
+        const int y        = list_top() + i * kRowHeight;
         const bool current = (index == _selected);
 
         if (current) {
@@ -306,6 +316,8 @@ void AppZX::onOpen()
      * with the network up the machine will not start -- but which of the
      * two is wanted at a given moment is not this application's to
      * decide, and the jobs application is where that choice is made. */
+
+    app_header::reset();
 
     _state    = STATE_BROWSER;
     _selected = 0;
@@ -471,6 +483,15 @@ void AppZX::onRunning()
     /* The home button leaves the emulator, the same as every other
      * application here; nothing inside the machine can claim it. */
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    /* Only on the list. Once the machine is running the panel is its
+     * screen and its border, and there is no band up there to press. */
+    if (_state == STATE_BROWSER &&
+        app_header::back_pressed(GetHAL().display.width(), 0, 0)) {
         audio::play_random_tone();
         close();
         return;

@@ -6,6 +6,7 @@
 #include "assets/taskman_big.h"
 #include "assets/taskman_small.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <hal.h>
@@ -46,9 +47,20 @@ constexpr std::uint16_t kGrid    = rgb(78, 78, 86);
 constexpr std::uint32_t kGridEvery = 30;
 
 constexpr int kRowHeight = 9;
-constexpr int kHeaderY   = 1;
-constexpr int kGraphTop  = 11;
 constexpr int kGraphRows = 44;
+
+/* The numbers and the graph move down under the band across the top.
+ * The line keeps a row of its own rather than being squeezed into the
+ * band beside the title: on 320 columns what is left between "TaskMan"
+ * and the corner button is nineteen characters and the line is thirty. */
+int header_y()
+{
+    return app_header::height() + 2;
+}
+int graph_top()
+{
+    return header_y() + 10;
+}
 
 /* Column positions in the task list, in pixels. Font0 is six wide. */
 constexpr int kColName  = 2;
@@ -362,13 +374,17 @@ void AppTaskman::draw()
     char line[48];
     std::snprintf(line, sizeof(line), "cpu %3u%%   free %4uK   low %4uK", (unsigned)_cpu_now,
                   (unsigned)(_free_now / 1024U), (unsigned)(_free_min / 1024U));
-    canvas.fillRect(0, 0, width, kGraphTop - 1, kBg);
+    app_header::draw(canvas, "TaskMan");
+    canvas.setFont(&fonts::Font0);
+    canvas.setTextSize(1);
+    canvas.setTextDatum(top_left);
+    canvas.fillRect(0, app_header::height() + 1, width, graph_top() - app_header::height() - 2, kBg);
     canvas.setTextColor(kText, kBg);
-    canvas.drawString(line, kColName, kHeaderY);
+    canvas.drawString(line, kColName, header_y());
 
-    draw_graph(kGraphTop, kGraphRows);
+    draw_graph(graph_top(), kGraphRows);
 
-    const int list_top = kGraphTop + kGraphRows + 2;
+    const int list_top = graph_top() + kGraphRows + 2;
     draw_list(list_top, height - 10);
 
     /* Footer, and the count of everything running whether or not it fits
@@ -386,7 +402,7 @@ void AppTaskman::scroll(int delta)
     if (_task_count == 0) {
         return;
     }
-    const int visible = visible_rows(kGraphTop + kGraphRows + 2, GetHAL().display.height() - 10);
+    const int visible = visible_rows(graph_top() + kGraphRows + 2, GetHAL().display.height() - 10);
 
     _top += delta;
     if (_top > _task_count - visible) {
@@ -404,6 +420,7 @@ void AppTaskman::onOpen()
 
     GetHAL().setFullScreenApp(true);
     GetHAL().display.fillScreen(kBg);
+    app_header::reset();
 
     _store = new (std::nothrow) Store_t();
     if (_store == nullptr) {
@@ -446,6 +463,12 @@ void AppTaskman::onRunning()
 {
     if (_close_requested) {
         _close_requested = false;
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().display.width(), 0, 0)) {
         audio::play_random_tone();
         close();
         return;

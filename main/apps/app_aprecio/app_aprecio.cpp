@@ -3,6 +3,7 @@
  */
 #include "app_aprecio.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -289,6 +290,8 @@ void AppAprecio::onOpen()
 {
     mclog::tagInfo(getAppInfo().name, "on open");
 
+    app_header::reset();
+
     load_config();
     _uart_ready = uart_start(_config);
     if (!_uart_ready) {
@@ -339,6 +342,11 @@ void AppAprecio::onRunning()
     if (_close_requested) {
         _close_requested = false;
         close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
+        _close_requested = true;
         return;
     }
 
@@ -553,21 +561,27 @@ void AppAprecio::render_main()
     // Port and state share the top line; the framing goes underneath. On
     // this panel the framing line is too long to sit beside the title
     // without running into it.
+    const int right_edge = app_header::back_left(c.width()) - 8;
     const char* state = _running ? "SENDING" : "STOPPED";
     c.setTextColor(_running ? THEME_COLOR_SYSTEM_BAR : (uint32_t)0x888888);
-    c.drawString(state, c.width() - kMargin, 14);
+    c.drawString(state, right_edge, 14);
 
     char line[64];
     snprintf(line, sizeof(line), "UART%d", _config.port);
     c.setTextColor((uint32_t)0xAAAAAA);
-    c.drawString(line, c.width() - kMargin - c.textWidth(state) - 6, 14);
+    c.drawString(line, right_edge - c.textWidth(state) - 6, 14);
 
     snprintf(line, sizeof(line), "TX=%d %u %u%c%u", _config.tx_pin,
              static_cast<unsigned>(_config.baud), static_cast<unsigned>(_config.data_bits), _config.parity,
              static_cast<unsigned>(_config.stop_bits));
-    c.drawString(line, c.width() - kMargin, 30);
+    c.drawString(line, right_edge, 30);
 
     c.drawLine(0, kHeaderHeight, c.width() - 1, kHeaderHeight, (uint32_t)0x555555);
+
+    /* The way out, in the corner the port line has just been kept clear
+     * of. The rest of this band is aprecio's own: it is where the band
+     * every other screen carries came from. */
+    app_header::draw_back(c);
 
     c.setTextDatum(lgfx::textdatum_t::baseline_left);
     c.setTextColor((uint32_t)0xAAAAAA);

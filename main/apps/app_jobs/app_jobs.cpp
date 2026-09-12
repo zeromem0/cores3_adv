@@ -3,6 +3,7 @@
  */
 #include "app_jobs.h"
 
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -45,7 +46,23 @@ constexpr int kColState  = kColName + kNameChars * 6;
 constexpr int kColDetail = kColState + 6 * 6;
 
 constexpr int kRowHeight = 14;
-constexpr int kListTop   = 22;
+
+/* Everything here is measured down from under the band across the top,
+ * which every other application on this board carries too. The three
+ * numbers used to be 2, 12 and 22; they are the same three, moved down
+ * by the band. */
+int column_header_y()
+{
+    return app_header::height() + 2;
+}
+int rule_y()
+{
+    return column_header_y() + 10;
+}
+int list_top()
+{
+    return column_header_y() + 20;
+}
 
 /* The legend and the rule above it, measured up from the bottom edge, so
  * the list knows where it has to stop. This is what the fourth job ran
@@ -75,7 +92,7 @@ AppJobs::~AppJobs()
 
 int AppJobs::visible_rows() const
 {
-    const int room = GetHAL().display.height() - kLegendHeight - kListTop;
+    const int room = GetHAL().display.height() - kLegendHeight - list_top();
     const int rows = room / kRowHeight;
     return rows > 0 ? rows : 1;
 }
@@ -99,6 +116,8 @@ void AppJobs::draw()
         _needs_clear = false;
     }
 
+    app_header::draw(canvas, "Jobs");
+
     canvas.setFont(&fonts::Font0);
     canvas.setTextSize(1);
     canvas.setTextDatum(top_left);
@@ -108,9 +127,9 @@ void AppJobs::draw()
     const int list_bottom = canvas.height() - kLegendHeight;
 
     canvas.setTextColor(TFT_DARKGREY, kColourBg);
-    canvas.drawString("name", kColName, 2);
-    canvas.drawString("state", kColState, 2);
-    canvas.drawString("detail", kColDetail, 2);
+    canvas.drawString("name", kColName, column_header_y());
+    canvas.drawString("state", kColState, column_header_y());
+    canvas.drawString("detail", kColDetail, column_header_y());
 
     /* How far down the list this is, shown only when there is more of it
      * than fits -- otherwise the counter is noise. */
@@ -118,10 +137,10 @@ void AppJobs::draw()
         char position[16];
         std::snprintf(position, sizeof(position), "%d/%d", _selected + 1, total);
         canvas.setTextDatum(top_right);
-        canvas.drawString(position, canvas.width() - 4, 2);
+        canvas.drawString(position, app_header::back_left(canvas.width()) - 8, column_header_y());
         canvas.setTextDatum(top_left);
     }
-    canvas.drawFastHLine(0, 12, canvas.width(), TFT_DARKGREY);
+    canvas.drawFastHLine(0, rule_y(), canvas.width(), TFT_DARKGREY);
 
     int drawn = 0;
     for (int i = _top; i < total && drawn < visible; i++) {
@@ -130,7 +149,7 @@ void AppJobs::draw()
             continue;
         }
 
-        const int y        = kListTop + drawn * kRowHeight;
+        const int y        = list_top() + drawn * kRowHeight;
         const bool current = (i == _selected);
         drawn++;
 
@@ -170,7 +189,7 @@ void AppJobs::draw()
 
     /* Whatever the list no longer reaches, given back to the background:
      * scrolling up leaves the last row of the previous view behind. */
-    const int used = kListTop + drawn * kRowHeight - 3;
+    const int used = list_top() + drawn * kRowHeight - 3;
     if (used < list_bottom) {
         canvas.fillRect(0, used, canvas.width(), list_bottom - used, kColourBg);
     }
@@ -221,6 +240,7 @@ void AppJobs::onOpen()
     _top         = 0;
     _needs_clear = true;
     _dirty       = true;
+    app_header::reset();
 
     _key_raw_slot = GetHAL().keyboard.onKeyEventRaw.connect([this](const Keyboard::KeyEventRaw_t& key) {
         if (!key.state) {
@@ -255,6 +275,12 @@ void AppJobs::onRunning()
 {
     if (_close_requested) {
         _close_requested = false;
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().display.width(), 0, 0)) {
         audio::play_random_tone();
         close();
         return;

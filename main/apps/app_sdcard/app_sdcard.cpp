@@ -6,6 +6,7 @@
 #include "app_sdcard.h"
 #include "assets/tf_big.h"
 #include "assets/tf_small.h"
+#include <apps/utils/app_header/app_header.h>
 #include <apps/utils/audio/audio.h>
 #include <apps/utils/common.h>
 #include <apps/utils/theme.h>
@@ -37,6 +38,9 @@ void AppSdcard::onOpen()
     GetHAL().canvas.setTextSize(1);
     GetHAL().canvas.setCursor(0, 0);
 
+    /* The finger that opened this is very likely still on the glass. */
+    app_header::reset();
+
     probe_sd_card();
     _time_count = GetHAL().millis();
 }
@@ -50,6 +54,12 @@ void AppSdcard::onRunning()
 
     // Close app when home button clicked
     if (GetHAL().homeButton.wasClicked()) {
+        audio::play_random_tone();
+        close();
+        return;
+    }
+
+    if (app_header::back_pressed(GetHAL().canvas.width(), GetHAL().canvasKeyboardBar.width(), 0)) {
         audio::play_random_tone();
         close();
     }
@@ -69,11 +79,14 @@ void AppSdcard::probe_sd_card()
     //                 result.is_mounted, result.name, result.size, result.type);
 
     GetHAL().canvas.fillScreen(THEME_COLOR_BG);
-    GetHAL().canvas.setCursor(0, 0);
+    app_header::draw(GetHAL().canvas, "SDCard");
+
+    GetHAL().canvas.setFont(FONT_REPL);
+    GetHAL().canvas.setCursor(0, app_header::height() + 6);
     GetHAL().canvas.setTextColor(TFT_ORANGE);
     GetHAL().canvas.println("SD Card Info:");
 
-    GetHAL().canvas.setCursor(0, 24);
+    GetHAL().canvas.setCursor(0, app_header::height() + 30);
     if (result.is_mounted) {
         GetHAL().canvas.setTextColor(TFT_CYAN);
         GetHAL().canvas.println(result.name.c_str());
