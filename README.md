@@ -11,6 +11,12 @@ and 8 MB of PSRAM, and no keys at all. What replaces the keyboard is an
 [M5Stack CardKB](https://docs.m5stack.com/en/unit/cardkb_1.1) on Grove
 port A.
 
+![The desktop and one screen from each application](docs/apps.png)
+
+Captured off the panel over HTTP, as is the timelapse of the same walk
+through the firmware: [docs/demo.gif](docs/demo.gif), or the same film
+as [mp4](docs/demo.mp4).
+
 ## Input
 
 Everything in this firmware reads the keyboard by physical matrix position
