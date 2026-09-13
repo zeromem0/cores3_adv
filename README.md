@@ -30,7 +30,7 @@ A Bluetooth keyboard is the third way in, and arrives at the same place.
 The `blekbd` job takes the board's radio as a BLE HID host, looks for
 anything advertising the HID service, asks it to encrypt the link, and
 turns the usages it sends into the same matrix positions. It is off until
-started from the jobs application, because the radio is paid for in
+started from the Jobs application, because the radio is paid for in
 internal memory; once started it stays up until the board is rebooted.
 
 The power button is the home key. `M5.BtnA` on this board is a touch zone
@@ -47,14 +47,14 @@ arrows. Fourteen applications:
 | Clock | the time, where it came from, and setting it by hand |
 | TaskMan | what the scheduler is running, and what it costs |
 | SDCard | what is in the slot |
-| jobs | the background services, and starting or stopping them |
-| dhex | a serial line in hex and ASCII, with a terminal under it |
-| aprecio | sends a line to a serial port on a timer |
-| irriga | watering schedules, two zones, with a clock behind them |
-| zx | a ZX Spectrum 48K, drawn pixel for pixel inside its border |
-| wilma | recognises a spoken phrase it was taught, in the voice that taught it |
-| about | chip, flash, memory, address, and a colour bar that tests the panel |
-| bClock | a clock made of molecules, snowflakes or icons |
+| Jobs | the background services, and starting or stopping them |
+| Dhex | a serial line in hex and ASCII, with a terminal under it |
+| Aprecio | sends a line to a serial port on a timer |
+| Irriga | watering schedules, four zones, with a clock behind them |
+| ZX | a ZX Spectrum 48K, drawn pixel for pixel inside its border |
+| Wilma | recognises a spoken phrase it was taught, in the voice that taught it |
+| About | chip, flash, memory, address, and a colour bar that tests the panel |
+| Bclock | a clock made of molecules, snowflakes or icons |
 | IMU | the accelerometer and the gyroscope |
 | Record | the microphone |
 
@@ -87,7 +87,7 @@ The entry is remembered like any other and can be removed from SetWiFi.
 
 ### A tape for the emulator
 
-`zx` reads `.tap` and `.z80` files from the card, and can also carry one
+`ZX` reads `.tap` and `.z80` files from the card, and can also carry one
 in the firmware. See `main/apps/app_zx/assets/builtin_tape.h.example`;
 none is shipped here, since the Spectrum games worth playing are still
 under copyright.
@@ -99,9 +99,14 @@ Keyboard forwards a matrix that is not here either. Scan was folded into
 SetWiFi. The REPL and the PikaScript interpreter under it were dropped.
 ZX Ext is left out by choice.
 
-The SD slot is not working: GPIO35 is the panel's data/command line and the
-card's MISO at the same time. Several screens are still laid out for the
-Cardputer's 240x135 and have room to spare here.
+Several screens are still laid out for the Cardputer's 240x135 and have
+room to spare here.
+
+One thing worth knowing about the card slot: GPIO35 is the panel's
+data/command line and the card's MISO at the same time. The two are never
+driven at once and the card reads fine -- SDCard reports it and ZX loads
+tapes off it -- but it is the first place to look if either ever
+misbehaves while the other is busy.
 
 ## Acknowledgments
 
