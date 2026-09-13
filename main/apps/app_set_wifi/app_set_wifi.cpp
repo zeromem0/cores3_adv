@@ -16,6 +16,35 @@
 
 using namespace mooncake;
 
+namespace {
+
+/*
+ * How every screen in this application starts.
+ *
+ * The band first, then a console that scrolls only below it. The
+ * scrolling rectangle is the point: these screens write with println,
+ * and left to itself the scroll takes the whole canvas -- so the band
+ * would be carried off the top the moment the text reached the bottom.
+ *
+ * Scanning, the prompts and the connection report all used to clear the
+ * canvas and write straight at the top corner, which is why the first
+ * second of the application had no band at all.
+ */
+void start_screen()
+{
+    auto& canvas = GetHAL().canvas;
+
+    canvas.fillScreen(THEME_COLOR_BG);
+    app_header::draw(canvas, "SetWiFi");
+    canvas.setFont(&fonts::Font0);
+    canvas.setTextSize(1);
+    canvas.setScrollRect(0, app_header::height() + 1, canvas.width(),
+                         canvas.height() - app_header::height() - 1);
+    canvas.setCursor(0, app_header::height() + 6);
+}
+
+}  // namespace
+
 AppSetWiFi::AppSetWiFi()
 {
     setAppInfo().name     = "SetWiFi";
@@ -110,12 +139,10 @@ void AppSetWiFi::onClose()
 
 void AppSetWiFi::render_interface()
 {
-    GetHAL().canvas.fillScreen(THEME_COLOR_BG);
+    start_screen();
     GetHAL().canvas.setTextScroll(true);
     GetHAL().canvas.setBaseColor(THEME_COLOR_BG);
     GetHAL().canvas.setTextColor(TFT_WHITE, THEME_COLOR_BG);
-    GetHAL().canvas.setTextSize(1);
-    GetHAL().canvas.setCursor(0, 0);
 
     show_ssid_prompt();
 }
@@ -134,10 +161,9 @@ void AppSetWiFi::render_interface()
  */
 void AppSetWiFi::scan_networks()
 {
-    GetHAL().canvas.fillScreen(THEME_COLOR_BG);
-    GetHAL().canvas.setFont(&fonts::Font0);
+    start_screen();
     GetHAL().canvas.setTextSize(GetHAL().canvas.width() >= 480 ? 3 : 2);
-    GetHAL().canvas.setCursor(GetHAL().canvas.width() >= 480 ? 10 : 4, 8);
+    GetHAL().canvas.setCursor(GetHAL().canvas.width() >= 480 ? 10 : 4, app_header::height() + 8);
     GetHAL().canvas.setTextColor(TFT_ORANGE, THEME_COLOR_BG);
     GetHAL().canvas.println("Scanning...");
     GetHAL().pushCanvas();
@@ -279,9 +305,7 @@ void AppSetWiFi::choose_selected_network()
 {
     /* The row past the end is the manual one. */
     if (_selected >= static_cast<int>(_networks.size())) {
-        GetHAL().canvas.fillScreen(THEME_COLOR_BG);
-        GetHAL().canvas.setTextSize(1);
-        GetHAL().canvas.setCursor(0, 0);
+        start_screen();
         _wifi_ssid.clear();
         _wifi_password.clear();
         _input_buffer.clear();
@@ -295,17 +319,13 @@ void AppSetWiFi::choose_selected_network()
     if (wifi_store::password_for(_wifi_ssid, known_password)) {
         mclog::tagInfo(getAppInfo().name, "\"{}\" is already known, connecting", _wifi_ssid);
         _wifi_password = known_password;
-        GetHAL().canvas.fillScreen(THEME_COLOR_BG);
-        GetHAL().canvas.setTextSize(1);
-        GetHAL().canvas.setCursor(0, 0);
+        start_screen();
         _current_state = STATE_CONNECTING;
         show_connection_status();
         return;
     }
 
-    GetHAL().canvas.fillScreen(THEME_COLOR_BG);
-    GetHAL().canvas.setTextSize(1);
-    GetHAL().canvas.setCursor(0, 0);
+    start_screen();
     GetHAL().canvas.setTextColor(TFT_WHITE, THEME_COLOR_BG);
     GetHAL().canvas.println(_wifi_ssid.c_str());
     _input_buffer.clear();
