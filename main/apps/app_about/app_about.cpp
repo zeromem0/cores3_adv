@@ -140,6 +140,8 @@ void AppAbout::draw()
 
     const esp_app_desc_t* app = esp_app_get_description();
 
+    app_header::draw(canvas, "About");
+
     /*
      * The mascot's head, from the boot screen's own artwork.
      *
@@ -148,17 +150,38 @@ void AppAbout::draw()
      * picture -- no separate asset, no cropping, just a shorter height
      * than the data holds.
      *
-     * Wide panels only. On the Cardputer the mascot is as wide as the
-     * whole screen, so there is nowhere to put it that is not on top of
-     * the text it would be introducing.
+     * At its own size on a wide panel. On this one it is scaled to the
+     * column the text leaves free on the right: full size it is three
+     * quarters of the width, which is why the Cardputer had none at all.
+     * Drawn after the band, so the band is not the thing it covers.
      */
+    constexpr int kLogoW    = 240;
+    constexpr int kLogoRows = 74;
     if (roomy) {
-        constexpr int kLogoW = 240;
-        constexpr int kLogoRows = 74;
-        canvas.pushImage(width - kLogoW - 8, 4, kLogoW, kLogoRows, image_data_boot);
-    }
+        canvas.pushImage(width - kLogoW - 8, app_header::height() + 4, kLogoW, kLogoRows,
+                         image_data_boot);
+    } else {
+        /*
+         * The head alone, and only as much of the row as it fills.
+         *
+         * The boot screen carries its own wording beside the mascot --
+         * "Any Key to start" -- which belongs on a boot screen and not
+         * here. It is cut off with a clipping window rather than a
+         * second asset: the whole picture is drawn scaled, and only the
+         * part of it inside the window lands on the canvas.
+         */
+        constexpr float kZoom = 0.9f;
+        constexpr int kHeadW  = 108;
+        const int vis_h       = (int)(kLogoRows * kZoom);
+        const int vis_x       = width - 8 - kHeadW;
+        const int vis_y       = app_header::height() + 6;
 
-    app_header::draw(canvas, "About");
+        canvas.setClipRect(vis_x, vis_y, kHeadW, vis_h);
+        canvas.pushImageRotateZoomWithAA(vis_x + (kLogoW * kZoom) / 2.0f, vis_y + vis_h / 2.0f,
+                                         kLogoW / 2.0f, kLogoRows / 2.0f, 0.0f, kZoom, kZoom,
+                                         kLogoW, kLogoRows, image_data_boot);
+        canvas.clearClipRect();
+    }
 
     canvas.setFont(&fonts::Font0);
     canvas.setTextSize(body_size + 1);
